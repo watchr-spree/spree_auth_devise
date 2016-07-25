@@ -16,14 +16,25 @@ class Spree::Admin::UserPasswordsController < Devise::PasswordsController
   # overridden to:
   #   respond_with resource, :location => spree.login_path
   #
-  def create
-    self.resource = resource_class.send_reset_password_instructions(params[resource_name])
+  def new
+	cookies.permanent[:refer] = { value: request.referrer, expires: 10.hour.from_now }
+  end
 
+
+  def create
+     if cookies[:refer].nil?
+                        ref = spree.login_path
+                else
+                    	ref = cookies[:refer]
+                end
+  self.resource = resource_class.send_reset_password_instructions(params[resource_name])
     if resource.errors.empty?
       set_flash_message(:notice, :send_instructions) if is_navigational_format?
-      respond_with resource, :location => spree.admin_login_path
+      #respond_with resource, :location => "/"
+    respond_with resource, :location => ref
     else
-      respond_with_navigational(resource) { render :new }
+      respond_with resource, :location => params[:path] || spree.login_path
+        #respond_with_navigational(resource) { render :new }
     end
   end
 
